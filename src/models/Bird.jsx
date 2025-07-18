@@ -7,6 +7,7 @@ const Bird = () => {
         <mesh position={[-3, 2, 1]} scale={[0.003, 0.003, 0.003]}>
             <primitive object={scene}/>
         </mesh>
+
      );
 }
  
