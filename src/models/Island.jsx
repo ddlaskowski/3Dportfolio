@@ -1,12 +1,12 @@
 import React, { useRef, useEffect, useState } from 'react'
 import { useGLTF } from '@react-three/drei'
-import { events, useFrame, useThree } from '@react-three/fiber';
+import {useFrame, useThree } from '@react-three/fiber';
 import {a} from '@react-spring/three';
 
 import islandScene from '../assets/3d/island.glb';
 
-const Island = ({isRotating, setIsRotating, ...props}) => {
-    const [currentStage, setCurrentStage] = useState(0);
+const Island = ({isRotating, setIsRotating, setCurrentStage, ...props}) => {
+
     const islandRef = useRef();
 
     const {gl, viewport} = useThree();
@@ -15,7 +15,27 @@ const Island = ({isRotating, setIsRotating, ...props}) => {
     const lastX = useRef(0);
     const rotationSpeed = useRef(0);
     const dampingFactor = 0.95;
+    let scrollTimeout = null;
 
+    const handleWheel = (e) => {
+        e.stopPropagation();
+        e.preventDefault();
+        const delta = -(e.deltaY); 
+        if (delta < 0)
+            {
+            setIsRotating(true);
+            const rotationAmount = delta * 0.0001 * Math.PI; 
+    
+            islandRef.current.rotation.y += rotationAmount;
+            rotationSpeed.current = rotationAmount;
+    
+                // Clear previous timeout and start a new one
+            clearTimeout(scrollTimeout);
+            scrollTimeout = setTimeout(() => {
+                setIsRotating(false); // "Scroll stopped"
+            }, 1200); // 100ms after last scroll        
+        }
+    };
     const handlePointerDown = (e) => {
         e.stopPropagation();
         e.preventDefault();
@@ -59,7 +79,6 @@ const Island = ({isRotating, setIsRotating, ...props}) => {
         if(e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
             if(isRotating) setIsRotating(false);
         }
-
     }
 
     useFrame(() => {
@@ -100,12 +119,14 @@ const Island = ({isRotating, setIsRotating, ...props}) => {
         canvas.addEventListener('pointerdown', handlePointerDown);
         canvas.addEventListener('pointerup', handlePointerUp);
         canvas.addEventListener('pointermove', handlePointerMove);
+        canvas.addEventListener('wheel', handleWheel, { passive: false });
         document.addEventListener('keydown', handleKeyDown);
         document.addEventListener('keyup', handleKeyUp);
         return () => {
             canvas.removeEventListener('pointerdown', handlePointerDown);
             canvas.removeEventListener('pointerup', handlePointerUp);
             canvas.removeEventListener('pointermove', handlePointerMove);
+            canvas.removeEventListener('wheel', handleWheel);
             document.removeEventListener('keydown', handleKeyDown);
             document.removeEventListener('keyup', handleKeyUp);
         }
